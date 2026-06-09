@@ -4,12 +4,25 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { lat = 1.4927, lon = 103.7414 } = req.query;
+  const { lat, lon } = req.query;
 
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+  // STRICT: no fallback
+  if (!lat || !lon || typeof lat !== "string" || typeof lon !== "string") {
+    return res.status(400).json({
+      error: "Missing lat or lon",
+    });
+  }
 
-  const response = await fetch(url);
-  const data = await response.json();
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
 
-  res.status(200).json(data);
+    const response = await fetch(url);
+    const data = await response.json();
+
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to fetch weather",
+    });
+  }
 }
